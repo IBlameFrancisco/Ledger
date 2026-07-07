@@ -4,6 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // "/" locally and on Vercel; CI sets BASE_PATH=/Ledger/ for GitHub Pages.
+  base: process.env.BASE_PATH || "/",
   plugins: [
     react(),
     tailwindcss(),
