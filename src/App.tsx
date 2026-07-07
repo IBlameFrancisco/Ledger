@@ -9,6 +9,7 @@ import {
   saveState,
   setCoach,
   todayStr,
+  tomorrowStr,
   uncompleteTask
 } from "./lib/engine";
 import { fetchCoach } from "./lib/coach";
@@ -21,9 +22,21 @@ export type View = "today" | "manage" | "logbook";
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadState());
   const [view, setView] = useState<View>("today");
+  const [day, setDay] = useState<string>(() => todayStr());
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<BeachScene | null>(null);
   const stateRef = useRef(state);
+  const coachTokens = useRef<Record<string, number>>({});
+
+  // Roll the whole UI over at midnight: a tab left open otherwise keeps
+  // yesterday's date, checkmarks, and dead Undo buttons.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = todayStr();
+      setDay((prev) => (prev === d ? prev : d));
+    }, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     stateRef.current = state;
@@ -50,7 +63,7 @@ export default function App() {
     };
   }, []);
 
-  const today = todayStr();
+  const today = day;
   const log = state.log[today] || {};
   const doneCount = state.tasks.filter((t) => log[t.id]).length;
 
@@ -74,13 +87,24 @@ export default function App() {
       const updated = next.tasks.find((t) => t.id === task.id);
       if (updated) {
         const history = recentEntries(next, task.id, 5);
+        // Stamp dates and a request token now: the response may land after
+        // midnight, after an undo, or after a newer completion.
+        const logDate = todayStr();
+        const forDate = tomorrowStr();
+        const token = (coachTokens.current[task.id] || 0) + 1;
+        coachTokens.current[task.id] = token;
         void fetchCoach(
           updated,
           opts.text || "",
           !!opts.advance || task.type === "rotation",
-          history
+          history,
+          forDate
         ).then((coach: CoachNote) => {
-          setState((s2) => setCoach(s2, task.id, coach));
+          setState((s2) => {
+            if (coachTokens.current[task.id] !== token) return s2;
+            if (!s2.log[logDate]?.[task.id]) return s2;
+            return setCoach(s2, task.id, coach);
+          });
         });
       }
     },
@@ -88,6 +112,7 @@ export default function App() {
   );
 
   const handleUndo = useCallback((id: string) => {
+    coachTokens.current[id] = (coachTokens.current[id] || 0) + 1;
     setState((s) => uncompleteTask(s, id));
   }, []);
 

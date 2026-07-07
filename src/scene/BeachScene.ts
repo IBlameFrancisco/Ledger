@@ -161,7 +161,12 @@ export class BeachScene {
   }
 
   setProgress(p: number) {
-    this.progress = Math.max(0, Math.min(1, p));
+    const clamped = Math.max(0, Math.min(1, p));
+    if (clamped === this.progress) return;
+    this.progress = clamped;
+    // No animation loop under reduced motion, so repaint the static frame —
+    // otherwise the moonlight path never reflects the day's progress.
+    if (this.reduced && this.running) this.drawStatic();
   }
 
   ripple(x: number, y: number) {

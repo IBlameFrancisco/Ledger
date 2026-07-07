@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppState, Task, TaskType } from "../lib/types";
 import { CATS } from "../lib/types";
-import { curItem } from "../lib/engine";
+import { curItem, normalizeState } from "../lib/engine";
 
 interface Props {
   state: AppState;
@@ -54,7 +54,9 @@ export default function Manage({ state, saveTask, deleteTask, onReset, onImport 
     reader.onload = () => {
       try {
         const s = JSON.parse(String(reader.result)) as AppState;
-        if (Array.isArray(s.tasks)) onImport(s);
+        // Same normalization as loadState: a hand-edited or partial backup
+        // missing log/todos/entries must not crash the app on render.
+        if (Array.isArray(s.tasks)) onImport(normalizeState(s));
       } catch {
         /* ignore bad files */
       }
@@ -89,7 +91,7 @@ export default function Manage({ state, saveTask, deleteTask, onReset, onImport 
                         {t.time ? ` · ${t.time}` : ""}
                       </span>
                     </div>
-                    {t.items && curItem(t) && (
+                    {(t.type === "rotation" || t.type === "sequence") && curItem(t) && (
                       <div className="truncate font-ui text-[11.5px] text-ink-faint">
                         now: {curItem(t)?.name}
                       </div>
@@ -238,9 +240,25 @@ function Editor({
     if (!out.name) return;
     out.minutes = Math.max(0, Math.round(Number(out.minutes) || 0));
     if (hasItems) {
+      // Dropping blank-named steps shifts the indices of everything after
+      // them, so shift currentIndex by the blanks that preceded it.
+      const blanksBefore = (out.items || []).filter(
+        (it, i) => i < out.currentIndex && !it.name.trim()
+      ).length;
       out.items = (out.items || []).filter((it) => it.name.trim());
       if (!out.items.length) return;
-      out.currentIndex = Math.min(out.currentIndex, out.items.length - 1);
+      out.currentIndex = Math.max(
+        0,
+        Math.min(out.currentIndex - blanksBefore, out.items.length - 1)
+      );
+      // Keep a completed sequence completed unless new milestones were added
+      // past the current one; plain field edits must not resurrect it.
+      out.finished = out.finished && out.currentIndex >= out.items.length - 1;
+    } else {
+      // A task switched to daily must not keep driving its card off stale
+      // rotation/sequence items.
+      delete out.items;
+      out.currentIndex = 0;
       out.finished = false;
     }
     onSave(out);

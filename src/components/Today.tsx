@@ -196,14 +196,17 @@ function TaskCard({
   const item = curItem(task);
   const next = nextItem(task);
   const isSeq = task.type === "sequence";
-  const title = rec ? rec.item ?? task.name : task.items ? item?.name ?? task.name : task.name;
-  const label = task.items ? task.name : null;
+  // Key off the type, not items presence: a task edited from rotation to
+  // daily may still carry an items array that should no longer drive the card.
+  const hasItems = task.type === "rotation" || task.type === "sequence";
+  const title = rec ? rec.item || task.name : hasItems ? item?.name || task.name : task.name;
+  const label = hasItems ? task.name : null;
   const coachActive = task.coach && task.coach.forDate === today ? task.coach : null;
   const subline = rec
     ? null
     : coachActive
       ? coachActive.note
-      : task.items
+      : hasItems
         ? item?.detail || null
         : task.note || null;
 
