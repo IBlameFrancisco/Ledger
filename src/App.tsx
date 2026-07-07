@@ -152,6 +152,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen">
       <canvas ref={canvasRef} className="fixed inset-0 z-0" aria-hidden="true" />
+      <div className="scene-scrim pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
       <div className="relative z-10">
         <nav className="fixed top-0 right-0 z-20 flex gap-1 p-4 sm:p-6">
           {nav.map((n) => (

@@ -497,7 +497,7 @@ export class BeachScene {
       const yb = horizon + this.camH * s;
       const fsz = Math.max(11, (10.5 + 8.5 * (s - 0.289)) * k);
       ctx.font = `400 ${fsz.toFixed(1)}px "Space Grotesk", sans-serif`;
-      const step = s < 0.42 ? 3 : s < 0.7 ? 2 : 1;
+      const step = s < 0.42 ? 4 : s < 0.7 ? 3 : 2;
       const fade = 0.3 + 0.7 * u;
       for (let i = 0; i < COLS; i += step) {
         const idx = j * COLS + i;
@@ -505,7 +505,7 @@ export class BeachScene {
         const sx0 = cx + X * s;
         if (sx0 < -24 || sx0 > W + 24) continue;
         const h =
-          22 *
+          15 *
           k *
           (0.58 * Math.sin(0.35 * i + 0.0022 * z - 0.95 * T) +
             0.42 * Math.sin(0.176 * i - 0.0031 * z - 0.5 * T) +
@@ -533,8 +533,8 @@ export class BeachScene {
         const sig = (22 + 70 * u) * (W / 648);
         const gxx = (sx0 - moonSX) / sig;
         const ml = Math.exp(-gxx * gxx) * (0.6 + 0.4 * (1 - u)) * 0.95 * pathBoost;
-        let al = (fade * (0.05 + 0.55 * v) + ml * (0.22 + 0.5 * v)) * kk;
-        if (al > 0.95) al = 0.95;
+        let al = (fade * (0.04 + 0.32 * v) + ml * (0.16 + 0.4 * v)) * kk;
+        if (al > 0.6) al = 0.6;
 
         if (!this.reduced) {
           const px = sx0 + this.ox[idx];
@@ -579,19 +579,19 @@ export class BeachScene {
 
     ctx.lineCap = "round";
     ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = "rgba(225,235,250,0.06)";
+    ctx.strokeStyle = "rgba(225,235,250,0.045)";
     ctx.lineWidth = 5 * k;
     ctx.beginPath();
     ctx.moveTo(-10, shoreY(-10));
     for (let x = 6; x <= W + 12; x += 14) ctx.lineTo(x, shoreY(x));
     ctx.stroke();
-    ctx.strokeStyle = "rgba(230,240,252,0.26)";
-    ctx.lineWidth = 1.7 * k;
+    ctx.strokeStyle = "rgba(230,240,252,0.16)";
+    ctx.lineWidth = 1.4 * k;
     ctx.beginPath();
     ctx.moveTo(-10, shoreY(-10));
     for (let x = 6; x <= W + 12; x += 14) ctx.lineTo(x, shoreY(x));
     ctx.stroke();
-    ctx.strokeStyle = "rgba(220,232,248,0.09)";
+    ctx.strokeStyle = "rgba(220,232,248,0.06)";
     ctx.lineWidth = 3 * k;
     ctx.beginPath();
     let started = false;
@@ -608,7 +608,7 @@ export class BeachScene {
     for (let x = 30; x < W; x += 120) {
       const y2 = shoreY(x) - 26 * k - 10 * k * Math.sin(0.008 * x * fx + 0.6 * T);
       if (y2 > horizon + 56 * k) {
-        ctx.fillStyle = "rgba(215,228,245,0.04)";
+        ctx.fillStyle = "rgba(215,228,245,0.028)";
         ctx.beginPath();
         ctx.ellipse(x, y2, 56 * k, 8 * k, 0, 0, 6.2832);
         ctx.fill();
@@ -619,7 +619,7 @@ export class BeachScene {
 
     if (this.grain) {
       ctx.save();
-      ctx.globalAlpha = 0.045;
+      ctx.globalAlpha = 0.022;
       ctx.globalCompositeOperation = "overlay";
       const offX = this.reduced ? 0 : Math.floor(Math.random() * 140);
       const offY = this.reduced ? 0 : Math.floor(Math.random() * 140);
