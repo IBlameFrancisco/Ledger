@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Space Grotesk", system-ui, sans-serif;
+  --color-ink: #e9ecf4;
+  --color-ink-dim: #a7aec6;
+  --color-ink-faint: #79809b;
+  --color-gold: #e6cd96;
+  --color-night: #05070e;
+}
+
+html,
+body {
+  height: 100%;
+  background: #05070e;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100%;
+}
+
+.glass {
+  background: rgba(10, 14, 28, 0.55);
+  border: 1px solid rgba(233, 236, 244, 0.1);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-strong {
+  background: rgba(8, 11, 22, 0.78);
+  border: 1px solid rgba(233, 236, 244, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.field {
+  background: rgba(6, 9, 18, 0.6);
+  border: 1px solid rgba(233, 236, 244, 0.14);
+  color: var(--color-ink);
+  outline: none;
+}
+
+.field:focus {
+  border-color: rgba(230, 205, 150, 0.55);
+}
+
+.field::placeholder {
+  color: #5d6480;
+}
+
+::selection {
+  background: rgba(230, 205, 150, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
