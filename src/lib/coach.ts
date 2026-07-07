@@ -1,7 +1,7 @@
 import type { CoachNote, Entry, Task } from "./types";
 import { curItem, tomorrowStr } from "./engine";
 
-function ruleNote(task: Task, advanced: boolean): CoachNote {
+function ruleNote(task: Task, advanced: boolean, forDate: string): CoachNote {
   const item = curItem(task);
   let note = "";
   let focus = "";
@@ -22,16 +22,19 @@ function ruleNote(task: Task, advanced: boolean): CoachNote {
     focus = task.name;
     note = task.note || "Same again tomorrow. Keep the chain.";
   }
-  return { forDate: tomorrowStr(), focus, note, source: "rule" };
+  return { forDate, focus, note, source: "rule" };
 }
 
 export async function fetchCoach(
   task: Task,
   entryText: string,
   advanced: boolean,
-  history: Entry[]
+  history: Entry[],
+  // Stamped by the caller when the task is completed, so a response that
+  // crosses midnight in flight still lands on the intended day.
+  forDate: string = tomorrowStr()
 ): Promise<CoachNote> {
-  const fallback = ruleNote(task, advanced);
+  const fallback = ruleNote(task, advanced, forDate);
   if (!entryText.trim()) return fallback;
   try {
     const ctrl = new AbortController();
@@ -60,7 +63,7 @@ export async function fetchCoach(
     const data = (await res.json()) as { note?: string; focus?: string };
     if (!data.note) return fallback;
     return {
-      forDate: tomorrowStr(),
+      forDate,
       focus: (data.focus || fallback.focus).slice(0, 80),
       note: data.note.slice(0, 400),
       source: "ai"

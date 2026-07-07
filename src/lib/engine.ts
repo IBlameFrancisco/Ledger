@@ -44,17 +44,27 @@ export function nextItem(t: Task) {
 
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 
+export function normalizeState(s: AppState): AppState {
+  s.tasks = s.tasks.filter((t) => t && typeof t === "object" && typeof t.id === "string");
+  for (const t of s.tasks) {
+    if (typeof t.currentIndex !== "number") t.currentIndex = 0;
+    if (typeof t.streak !== "number") t.streak = 0;
+    if (typeof t.best !== "number") t.best = 0;
+    if (t.lastDone === undefined) t.lastDone = null;
+    if (typeof t.finished !== "boolean") t.finished = false;
+  }
+  s.entries = Array.isArray(s.entries) ? s.entries : [];
+  s.todos = Array.isArray(s.todos) ? s.todos : [];
+  s.log = s.log && typeof s.log === "object" ? s.log : {};
+  return s;
+}
+
 export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const s = JSON.parse(raw) as AppState;
-      if (Array.isArray(s.tasks)) {
-        s.entries = s.entries || [];
-        s.todos = s.todos || [];
-        s.log = s.log || {};
-        return s;
-      }
+      if (Array.isArray(s.tasks)) return normalizeState(s);
     }
   } catch {
     /* fall through to seed */
@@ -94,6 +104,7 @@ export function completeTask(state: AppState, id: string, opts: CompleteOpts): A
   const itemName = curItem(nt)?.name ?? null;
   const rec: LogRec = {
     prevStreak: nt.streak,
+    prevBest: nt.best,
     prevLast: nt.lastDone,
     prevIndex: nt.currentIndex,
     prevFinished: nt.finished,
@@ -125,12 +136,16 @@ export function completeTask(state: AppState, id: string, opts: CompleteOpts): A
 }
 
 export function uncompleteTask(state: AppState, id: string): AppState {
-  const t = todayStr();
   const next = clone(state);
   const nt = next.tasks.find((x) => x.id === id);
+  if (!nt) return state;
+  // The rec lives under the day the task was completed, which is lastDone —
+  // not necessarily today if the tab sat open across midnight.
+  const t = nt.lastDone && next.log[nt.lastDone]?.[id] ? nt.lastDone : todayStr();
   const rec = next.log[t]?.[id];
-  if (!nt || !rec) return state;
+  if (!rec) return state;
   nt.streak = rec.prevStreak;
+  nt.best = rec.prevBest ?? nt.best;
   nt.lastDone = rec.prevLast;
   nt.currentIndex = rec.prevIndex;
   nt.finished = rec.prevFinished;

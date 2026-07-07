@@ -39,6 +39,7 @@ export interface Todo {
 
 export interface LogRec {
   prevStreak: number;
+  prevBest: number;
   prevLast: string | null;
   prevIndex: number;
   prevFinished: boolean;
